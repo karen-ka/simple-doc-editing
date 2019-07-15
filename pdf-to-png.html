@@ -62,16 +62,24 @@
 	border: 1px solid rgba(0,0,0,0.2);
 	box-sizing: border-box;
 	position: absolute;
-	width: 500px;
-	height: 600px;
+	width: 400px;
+	height: 500px;
 }
 
 #annotations {
 	border: 1px solid rgba(0,0,0,0.2);
 	box-sizing: border-box;
 	position: absolute;
-	width: 500px;
-	height: 600px;
+	width: 400px;
+	height: 500px;
+}
+
+#shapes {
+	border: 1px solid rgba(0,0,0,0.2);
+	box-sizing: border-box;
+	position: absolute;
+	width: 400px;
+	height: 500px;
 }
 
 #page-loader {
@@ -127,6 +135,7 @@
 			</div>
 			<canvas id="pdf-canvas" width="400" style="z-index: 1"></canvas>
 			<canvas id="annotations" width="400" style="z-index: 2"></canvas>
+			<canvas id="shapes" width="400" style="z-index: 3"></canvas>
 			<div id="page-loader">Loading page ...</div>
 			<a id="download-image" href="#">Download PNG</a>
 		</div>
