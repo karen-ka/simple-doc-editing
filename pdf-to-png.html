@@ -6,6 +6,7 @@
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
 <script src="pdf.js"></script>
 <script src="pdf.worker.js"></script>
+<script src="draw.js"></script>
 <style type="text/css">
 
 #upload-button {
@@ -60,6 +61,17 @@
 #pdf-canvas {
 	border: 1px solid rgba(0,0,0,0.2);
 	box-sizing: border-box;
+	position: absolute;
+	width: 500px;
+	height: 600px;
+}
+
+#annotations {
+	border: 1px solid rgba(0,0,0,0.2);
+	box-sizing: border-box;
+	position: absolute;
+	width: 500px;
+	height: 600px;
 }
 
 #page-loader {
@@ -79,6 +91,16 @@
 	text-align: center;
 }
 
+/* .flex-container {
+	display: flex;
+	flex-direction: row;
+} */
+
+.tools {
+	text-align: center;
+	display: block;
+}
+
 </style>
 </head>
 
@@ -87,22 +109,29 @@
 <button id="upload-button">Select PDF</button> 
 <input type="file" id="file-to-upload" accept="application/pdf" />
 
-<div id="pdf-main-container">
-	<div id="pdf-loader">Loading document ...</div>
-	<div id="pdf-contents">
-		<div id="pdf-meta">
-			<div id="pdf-buttons">
-				<button id="pdf-prev">Previous</button>
-				<button id="pdf-next">Next</button>
-			</div>
-			<div id="page-count-container">Page <div id="pdf-current-page"></div> of <div id="pdf-total-pages"></div></div>
+<div id="flex-container">
+	<div id="pdf-main-container">
+		<div id="tools">
+			<input id="theText" type="text">
+			<button id="submittext">Draw text on canvas</button>
+			<button id="submitbox">Draw box on canvas</button>
 		</div>
-		<canvas id="pdf-canvas" width="400"></canvas>
-		<div id="page-loader">Loading page ...</div>
-		<a id="download-image" href="#">Download PNG</a>
+		<div id="pdf-loader">Loading document ...</div>
+		<div id="pdf-contents">
+			<div id="pdf-meta">
+				<div id="pdf-buttons">
+					<button id="pdf-prev">Previous</button>
+					<button id="pdf-next">Next</button>
+				</div>
+				<div id="page-count-container">Page <div id="pdf-current-page"></div> of <div id="pdf-total-pages"></div></div>
+			</div>
+			<canvas id="pdf-canvas" width="400" style="z-index: 1"></canvas>
+			<canvas id="annotations" width="400" style="z-index: 2"></canvas>
+			<div id="page-loader">Loading page ...</div>
+			<a id="download-image" href="#">Download PNG</a>
+		</div>
 	</div>
 </div>
-
 <script>
 
 var __PDF_DOC,
@@ -110,7 +139,11 @@ var __PDF_DOC,
 	__TOTAL_PAGES,
 	__PAGE_RENDERING_IN_PROGRESS = 0,
 	__CANVAS = $('#pdf-canvas').get(0),
+	__ANNOTATIONS = $('#annotations').get(0),
 	__CANVAS_CTX = __CANVAS.getContext('2d');
+
+// an array to hold text objects
+var texts = [];
 
 function showPDF(pdf_url) {
 	$("#pdf-loader").show();
@@ -144,6 +177,7 @@ function showPage(page_no) {
 
 	// While page is being rendered hide the canvas and show a loading message
 	$("#pdf-canvas").hide();
+	$("#annotations").hide();
 	$("#page-loader").show();
 	$("#download-image").hide();
 
@@ -160,12 +194,10 @@ function showPage(page_no) {
 
 		// Set canvas height
 		__CANVAS.height = viewport.height;
-
 		var renderContext = {
 			canvasContext: __CANVAS_CTX,
 			viewport: viewport
 		};
-		
 		// Render the page contents in the canvas
 		page.render(renderContext).then(function() {
 			__PAGE_RENDERING_IN_PROGRESS = 0;
@@ -175,6 +207,7 @@ function showPage(page_no) {
 
 			// Show the canvas and hide the page loader
 			$("#pdf-canvas").show();
+			$("#annotations").show();
 			$("#page-loader").hide();
 			$("#download-image").show();
 		});
@@ -218,6 +251,162 @@ $("#download-image").on('click', function() {
 	$(this).attr('href', __CANVAS.toDataURL()).attr('download', 'page.png');
 });
 
+
+// canvas related variables
+var canvas;
+var ctx;
+
+// variables used to get mouse position on the canvas
+var $canvas;
+var canvasOffset;
+var offsetX;
+var offsetY;
+var scrollX;
+var scrollY;
+
+function refresh () {
+    canvas = document.getElementById("annotations");
+    ctx = canvas.getContext("2d");
+    $canvas = $("#annotations");
+    canvasOffset = $canvas.offset();
+    offsetX = canvasOffset.left;
+    offsetY = canvasOffset.top;
+    scrollX = $canvas.scrollLeft();
+    scrollY = $canvas.scrollTop();
+}
+
+// variables to save last mouse position
+// used to see how far the user dragged the mouse
+// and then move the text by that distance
+var startX;
+var startY;
+
+// this var will hold the index of the hit-selected text
+var selectedText = -1;
+
+// clear the canvas & redraw all texts
+function draw() {
+	ctx.clearRect(0, 0, canvas.width, canvas.height);
+    for (var i = 0; i < texts.length; i++) {
+        var text = texts[i];
+		ctx.fillText(text.text, text.x, text.y);
+		console.log(texts);
+    }
+}
+
+// test if x,y is inside the bounding box of texts[textIndex]
+function textHittest(x, y, textIndex) {
+    var text = texts[textIndex];
+    return (x >= text.x && x <= text.x + text.width && y >= text.y - text.height && y <= text.y);
+}
+
+// handle mousedown events
+// iterate through texts[] and see if the user
+// mousedown'ed on one of them
+// If yes, set the selectedText to the index of that text
+function handleMouseDown(e) {
+	e.preventDefault();
+    startX = parseInt(e.clientX - offsetX);
+    startY = parseInt(e.clientY - offsetY);
+    // Put your mousedown stuff here
+    for (var i = 0; i < texts.length; i++) {
+        if (textHittest(startX, startY, i)) {
+            selectedText = i;
+        }
+    }
+}
+
+// done dragging
+function handleMouseUp(e) {
+    e.preventDefault();
+    selectedText = -1;
+}
+
+// also done dragging
+function handleMouseOut(e) {
+    e.preventDefault();
+    selectedText = -1;
+}
+
+// handle mousemove events
+// calc how far the mouse has been dragged since
+// the last mousemove event and move the selected text
+// by that distance
+function handleMouseMove(e) {
+    if (selectedText < 0) {
+        return;
+    }
+    e.preventDefault();
+    mouseX = parseInt(e.clientX - offsetX);
+    mouseY = parseInt(e.clientY - offsetY);
+
+    // Put your mousemove stuff here
+    var dx = mouseX - startX;
+    var dy = mouseY - startY;
+    startX = mouseX;
+    startY = mouseY;
+
+    var text = texts[selectedText];
+    text.x += dx;
+    text.y += dy;
+    draw();
+}
+
+// listen for mouse events
+$(document).on("mousedown", "#pdf-canvas", function(e){
+    handleMouseDown(e);
+});
+
+$(document).on("mouseup", "#pdf-canvas", function(e){
+    handleMouseUp(e);
+});
+
+$(document).on("mousemove", "#pdf-canvas", function(e){
+    handleMouseMove(e);
+});
+
+$(document).on("mouseout", "#pdf-canvas", function(e){
+    handleMouseOut(e);
+});
+
+// $("#pdf-canvas").mouseout(function (e) {
+//     handleMouseOut(e);
+// });
+
+// $('#file-to-upload').click(function () {
+//     refresh();
+// });
+// $(document).on("click", "#submitbox", function(){
+// 	refresh();
+// 	ctx.rect(20, 20, 150, 100);
+// 	ctx.stroke();
+// });
+
+$(document).on("click", "#submittext", function(){
+    refresh();
+    console.log("HI");
+    // calc the y coordinate for this text on the canvas
+    var y = texts.length * 20 + 20;
+
+    // get the text from the input element
+    var text = {
+        text: $("#theText").val(),
+        x: 20,
+        y: y
+    };
+
+    // calc the size of this text for hit-testing purposes
+    ctx.font = "16px verdana";
+    text.width = ctx.measureText(text.text).width;
+    text.height = 16;
+
+    // put this new text in the texts array
+    texts.push(text);
+
+    // redraw everything
+    draw();
+
+});
 </script>
 
 </body>
