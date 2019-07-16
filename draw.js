@@ -4,18 +4,17 @@ rect = {},
 drag = false,
 mouseX,
 mouseY,
-closeEnough = 5,
-dragTL = dragBL = dragTR = dragBR = false;
+closeEnough = 3,
+dragTL = dragBL = dragTR = dragBR = false,
+dragBox = false;
 
 var canvasOffset;
 var offsetX;
 var offsetY;
 
 $(document).on("click", "#submitbox", function(){
-    console.log("YOOO");
     canvas = document.getElementById('shapes');
     ctx = canvas.getContext('2d');
-    console.log(ctx);
     init();
     drawRect();
 });
@@ -41,7 +40,7 @@ function mouseDown(e) {
     // mouseX = e.pageX - this.offsetLeft;
     // mouseY = e.pageY - this.offsetTop;
     mouseX = parseInt(e.clientX - offsetX);
-    mouseY = parseInt(e.clientY - offsetY);
+    mouseY = parseInt(e.clientY - offsetY - 100);
     // if there isn't a rect yet
     if (rect.w === undefined) {
         rect.startX = mouseY;
@@ -76,28 +75,30 @@ function mouseDown(e) {
         dragBR = true;
 
     }
-    // (5.) none of them
-    else {
-        // handle not resizing
+    // Check if moving box
+    else if (boxHittest(mouseX, mouseY)) {
+        dragBox = true;
     }
-
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    console.log(boxHittest(mouseX, mouseY));
+    //ctx.clearRect(0, 0, canvas.width, canvas.height);
     draw();
 }
 
 function checkCloseEnough(p1, p2) {
-    console.log("p1: "+ p1);
-    console.log("p2: " + p2)
-return Math.abs(p1 - p2) < 50;
+    // console.log("p1: "+ p1);
+    // console.log("p2: " + p2)
+return Math.abs(p1 - p2) < 30;
 }
 
 function mouseUp() {
-dragTL = dragTR = dragBL = dragBR = false;
+    dragTL = dragTR = dragBL = dragBR = dragBox = false;
 }
 
 function mouseMove(e) {
     mouseX = parseInt(e.clientX - offsetX);
-    mouseY = parseInt(e.clientY - offsetY);
+    mouseY = parseInt(e.clientY - offsetY - 100);
+    // console.log(offsetX + " , " + offsetY);
+    // console.log("mouse: " + mouseX + ", " + mouseY);
     if (dragTL) {
         rect.w += rect.startX - mouseX;
         rect.h += rect.startY - mouseY;
@@ -114,14 +115,19 @@ function mouseMove(e) {
     } else if (dragBR) {
         rect.w = Math.abs(rect.startX - mouseX);
         rect.h = Math.abs(rect.startY - mouseY);
+    } else if (dragBox) {
+        rect.startX += Math.abs(rect.startX - mouseX);
+        rect.startY += Math.abs(rect.startY - mouseY);
     }
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    // ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     drawRect();
 }
 
 function drawRect() {
     ctx.fillStyle = "#000000";
+    ctx.lineWidth = 0.5;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.rect(rect.startX, rect.startY, rect.w, rect.h);
 	ctx.stroke();
     // ctx.fillRect(rect.startX, rect.startY, rect.w, rect.h);
@@ -136,11 +142,21 @@ function drawCircle(x, y, radius) {
 }
 
 function drawHandles() {
+    // console.log("X: " + rect.startX + ", Y: " + rect.startY);
     drawCircle(rect.startX, rect.startY, closeEnough);
     drawCircle(rect.startX + rect.w, rect.startY, closeEnough);
     drawCircle(rect.startX + rect.w, rect.startY + rect.h, closeEnough);
     drawCircle(rect.startX, rect.startY + rect.h, closeEnough);
     ctx.stroke();
+}
+
+function boxHittest(x, y) {
+    // console.log(x + ", " + y);
+    // console.log(rect.startX + ", " + rect.startY);
+     console.log("Y: " + rect.startY + ", " + rect.startY - rect.h);
+
+    // console.log(y >= rect.startY + rect.h && y <= rect.h);
+    return (x >= rect.startX && x <= rect.startX + rect.w && y >= rect.startY && y <= rect.h + rect.startY);
 }
 
 // init();
