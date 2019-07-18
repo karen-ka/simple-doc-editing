@@ -163,46 +163,46 @@ function drawRect() {
     }
 }
 
-const fs = require('fs');
-const {
-  PDFDocumentFactory,
-  PDFDocumentWriter,
-  StandardFonts,
-  drawLinesOfText,
-  drawImage,
-  drawRectangle,
-} = require('pdf-lib');
-const pdfDoc;
-const COURIER_FONT = 'Courier';
-const [courierRef, courierFont] = pdfDoc.embedStandardFont(
-    StandardFonts.Courier,
-  );
+// const fs = require('fs');
+// const {
+//   PDFDocumentFactory,
+//   PDFDocumentWriter,
+//   StandardFonts,
+//   drawLinesOfText,
+//   drawImage,
+//   drawRectangle,
+// } = require('pdf-lib');
+// const pdfDoc;
+// const COURIER_FONT = 'Courier';
+// const [courierRef, courierFont] = pdfDoc.embedStandardFont(
+//     StandardFonts.Courier,
+//   );
 
-$(document).on("click", "#downloadpdf", function(){  
-    pdfDoc = PDFDocumentFactory.load(assets.taxVoucherPdfBytes);
-    const pages = pdfDoc.getPages();
-    const existingPage = pages[0]
-  .addFontDictionary(COURIER_FONT, courierRef);
+// $(document).on("click", "#downloadpdf", function(){  
+//     pdfDoc = PDFDocumentFactory.load(assets.taxVoucherPdfBytes);
+//     const pages = pdfDoc.getPages();
+//     const existingPage = pages[0]
+//   .addFontDictionary(COURIER_FONT, courierRef);
 
-  const newContentStream = pdfDoc.createContentStream(
-    // Now let's draw 2 lines of red Courier text near the bottom of the page.
-    drawLinesOfText(
-      ['Lienholder Name!'].map(courierFont.encodeText),
-      {
-        x: 30,
-        y: 150, // TO FIX
-        font: COURIER_FONT,
-        size: 12,
-        colorRgb: [0, 0, 0],
-      },
-    ),
-  );
+//   const newContentStream = pdfDoc.createContentStream(
+//     // Now let's draw 2 lines of red Courier text near the bottom of the page.
+//     drawLinesOfText(
+//       ['Lienholder Name!'].map(courierFont.encodeText),
+//       {
+//         x: 30,
+//         y: 150, // TO FIX
+//         font: COURIER_FONT,
+//         size: 12,
+//         colorRgb: [0, 0, 0],
+//       },
+//     ),
+//   );
 
-  existingPage.addContentStreams(pdfDoc.register(newContentStream));
-  const pdfBytes = PDFDocumentWriter.saveToBytes(pdfDoc);
-  const filePath = `content/modified.pdf`;
-    fs.writeFileSync(filePath, pdfBytes);
-});
+//   existingPage.addContentStreams(pdfDoc.register(newContentStream));
+//   const pdfBytes = PDFDocumentWriter.saveToBytes(pdfDoc);
+//   const filePath = `content/modified.pdf`;
+//     fs.writeFileSync(filePath, pdfBytes);
+// });
 
 
 
