@@ -163,46 +163,64 @@ function drawRect() {
     }
 }
 
-// const fs = require('fs');
-// const {
-//   PDFDocumentFactory,
-//   PDFDocumentWriter,
-//   StandardFonts,
-//   drawLinesOfText,
-//   drawImage,
-//   drawRectangle,
-// } = require('pdf-lib');
-// const pdfDoc;
+// function base64ToArrayBuffer(base64) {
+//     var binaryString = window.atob(base64);
+//     var binaryLen = binaryString.length;
+//     var bytes = new Uint8Array(binaryLen);
+//     for (var i = 0; i < binaryLen; i++) {
+//        var ascii = binaryString.charCodeAt(i);
+//        bytes[i] = ascii;
+//     }
+//     return bytes;
+//  }
+
+//  function saveByteArray(reportName, byte) {
+//     var blob = new Blob([byte], {type: "application/pdf"});
+//     var link = document.createElement('a');
+//     link.href = window.URL.createObjectURL(blob);
+//     var fileName = reportName;
+//     link.download = fileName;
+//     link.click();
+// };
+
+// var sampleArr = base64ToArrayBuffer(data);
+// saveByteArray("Sample Report", sampleArr);
+
+// require([browserfs], result => browserfs = result);
+const fs = require('fs');
+//  import { PDFDocumentFactory, PDFDocumentWriter, StandardFonts, drawLinesOfText } from './pdf-lib';
+// import { readFileSync, writeFileSync } from 'fs';
 // const COURIER_FONT = 'Courier';
 // const [courierRef, courierFont] = pdfDoc.embedStandardFont(
 //     StandardFonts.Courier,
 //   );
 
-// $(document).on("click", "#downloadpdf", function(){  
-//     pdfDoc = PDFDocumentFactory.load(assets.taxVoucherPdfBytes);
-//     const pages = pdfDoc.getPages();
-//     const existingPage = pages[0]
-//   .addFontDictionary(COURIER_FONT, courierRef);
+$(document).on("click", "#downloadpdf", function(){  
+     console.log("click download!");
+    const pdfDoc = PDFDocumentFactory.load(browserfs.readFileSync('contractex.pdf'));
+    const pages = pdfDoc.getPages();
+    const existingPage = pages[0]
+  .addFontDictionary(COURIER_FONT, courierRef);
 
-//   const newContentStream = pdfDoc.createContentStream(
-//     // Now let's draw 2 lines of red Courier text near the bottom of the page.
-//     drawLinesOfText(
-//       ['Lienholder Name!'].map(courierFont.encodeText),
-//       {
-//         x: 30,
-//         y: 150, // TO FIX
-//         font: COURIER_FONT,
-//         size: 12,
-//         colorRgb: [0, 0, 0],
-//       },
-//     ),
-//   );
+  const newContentStream = pdfDoc.createContentStream(
+    // Now let's draw 2 lines of red Courier text near the bottom of the page.
+    drawLinesOfText(
+      ['Lienholder Name!'].map(courierFont.encodeText),
+      {
+        x: 30,
+        y: 150, // TO FIX
+        font: COURIER_FONT,
+        size: 12,
+        colorRgb: [0, 0, 0],
+      },
+    ),
+  );
 
-//   existingPage.addContentStreams(pdfDoc.register(newContentStream));
-//   const pdfBytes = PDFDocumentWriter.saveToBytes(pdfDoc);
-//   const filePath = `content/modified.pdf`;
-//     fs.writeFileSync(filePath, pdfBytes);
-// });
+  existingPage.addContentStreams(pdfDoc.register(newContentStream));
+  const pdfBytes = PDFDocumentWriter.saveToBytes(pdfDoc);
+  const filePath = `content/modified.pdf`;
+  browserfs.writeFileSync(filePath, pdfBytes);
+});
 
 
 

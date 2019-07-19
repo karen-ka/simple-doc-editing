@@ -1,0 +1,25 @@
+{
+  "name": "simple-doc",
+  "version": "1.0.0",
+  "description": "",
+  "main": "draw.js",
+  "dependencies": {
+    "file-system": "^2.2.2"
+  },
+  "devDependencies": {
+    "browserfs": "^1.4.3"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/karen-ka/simple-doc-editing.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/karen-ka/simple-doc-editing/issues"
+  },
+  "homepage": "https://github.com/karen-ka/simple-doc-editing#readme"
+}
